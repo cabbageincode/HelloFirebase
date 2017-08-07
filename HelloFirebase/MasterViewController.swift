@@ -18,7 +18,8 @@ class MasterViewController: UITableViewController {
     var detailViewController: DetailViewController? = nil
     
     var loginUser: HFUser?
-
+    var objectsInMyBag = [Dictionary<String, String>]()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -40,32 +41,86 @@ class MasterViewController: UITableViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if let currentUser = Auth.auth().currentUser {
-            
-            HFFirebaseDataManager.sharedInstance().getUser(token: currentUser.uid, completion: { (user, error) in
-                guard error == nil else {
-                    if (error!.errorCode == .HFDataError_NotExist) {
-                        self.performSegue(withIdentifier: MasterViewController.kSeguePresentEditor, sender: nil)
-                    }
-                    return
-                }
-                
-                self.loginUser = user
-                self.tableView.reloadData()
-            })
-        } else {
-            
+        guard let currentUser = Auth.auth().currentUser else {
+            //not login
             self.performSegue(withIdentifier: MasterViewController.kSeguePresentLogin, sender: nil)
+            return
         }
+        
+        let bagPathUrl = "https://my-first-in-firebase.firebaseio.com/Bags/" + currentUser.uid
+        let bagRef = Database.database().reference(fromURL: bagPathUrl)
+        /*
+         //也可以寫成以下方法…
+         let bagRef = Database.database().reference().child("Bags").child(currentUser.uid)
+         */
+        
+        bagRef.observe(.childAdded, with: { (snapshot) in
+            
+            guard let object = snapshot.value as? Dictionary<String, String> else {
+                return
+            }
+            
+            self.objectsInMyBag.append(object)
+            self.tableView.reloadData()
+        })
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
+    
+    private func addObjectToMybag(name: String, desc: String) {
+        
+//        let bagPathUrl = "https://my-first-in-firebase.firebaseio.com/Bags/user_a"// + Auth.auth().currentUser!.uid
+//        let bagRef = Database.database().reference(fromURL: bagPathUrl)
+
+        let bagRef = Database.database().reference().child("Bags").child("user_a")
+        
+        let bagDict = ["name": "pen", "desc": "this is a pen"]
+        
+        bagRef.childByAutoId().setValue(bagDict) { (error, resultRef) in
+            
+            guard error == nil else {
+                print("save bag object error... \(error.debugDescription)")
+                return
+            }
+        }
+    }
 
     func insertNewObject(_ sender: Any) {
         
+        let alertVC = UIAlertController(title: "加一個物品到我的包包裡", message: nil, preferredStyle: .alert)
+        alertVC.addTextField { (textField) in
+            textField.placeholder = "物件名字"
+        }
+        alertVC.addTextField { (textField) in
+            textField.placeholder = "敘述"
+        }
+        
+        let addAction = UIAlertAction(title: "添加", style: .default) { (action) in
+            
+            guard let objectName = alertVC.textFields![0].text else {
+                return
+            }
+            
+            guard let objectDesc = alertVC.textFields![1].text else {
+                return
+            }
+            
+            self.addObjectToMybag(name: objectName, desc: objectDesc)
+        }
+        let cancelAction = UIAlertAction(title: "取消", style: .cancel) { (action) in
+            
+            alertVC.dismiss(animated: true, completion: nil)
+        }
+        
+        alertVC.addAction(addAction)
+        alertVC.addAction(cancelAction)
+        
+        self.present(alertVC, animated: true) { 
+            
+        }
     }
 
     // MARK: - Segues
@@ -90,18 +145,16 @@ class MasterViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        if self.loginUser == nil {
-            return 0
-        } else {
-            return 1
-        }
+        return self.objectsInMyBag.count
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
 
-        cell.textLabel!.text = self.loginUser?.name
-        cell.detailTextLabel?.text = self.loginUser?.desc
+        let object = self.objectsInMyBag[indexPath.row]
+        
+        cell.textLabel!.text = object["name"]
+        cell.detailTextLabel?.text = object["desc"]
         
         return cell
     }
