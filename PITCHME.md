@@ -5,16 +5,19 @@
 ## Getting start...
 
 1. install pods
+
 ```md
 pod 'Firebase/Database'
 ```
 
 2. import module
+
 ```md
 import Firebase
 ```
 
 3. 取得Firebase library裡的資料管理工具
+
 ```md
 var ref: DatabaseReference!
 
@@ -33,6 +36,8 @@ let bagPathUrl = "https://my-first-in-firebase.firebaseio.com/Bags/" + currentUs
 let bagRef = Database.database().reference(fromURL: bagPathUrl)
 ```
 
+---
+
 * app path : https://my-first-in-firebase.firebaseio.com
 * table path : Bags
 >> https://my-first-in-firebase.firebaseio.com/Bags/
@@ -46,6 +51,7 @@ let bagRef = Database.database().reference(fromURL: bagPathUrl)
 以下2種寫法是一樣的!!!
 
 1. 寫法1
+
 ```md
 let bagPathUrl = "https://my-first-in-firebase.firebaseio.com/Bags/" + currentUser.uid
 let bagRef = Database.database().reference(fromURL: bagPathUrl)
@@ -53,6 +59,7 @@ let bagRef = Database.database().reference(fromURL: bagPathUrl)
 
 2. 寫法2
 app路徑下的Bags子路徑
+
 ```md
 let bagRef = Database.database().reference().child("Bags").child(currentUser.uid)
 ```
@@ -95,11 +102,13 @@ bagRef.childByAutoId().setValue(bagDict) { (error, resultRef) in
 ## 動手做
 
 1. 取得DatabaseReference
+
 ```md
 let bagRef = Database.database().reference().child("Bags").child("user_a")
 ```
 
 2. 新增一筆資料，name是 **pen**，desc是 **this is a pen**
+
 ```md
 let bagDict = ["name": "pen", "desc": "this is a pen"]
 
@@ -155,6 +164,7 @@ open func observe(_ eventType: DataEventType, with block: @escaping (DataSnapsho
 ## 動手做 --延申 user bags 的功能，取得包包的內容物
 
 1. 取得DatabaseReference
+
 ```md
 let bagRef = Database.database().reference().child("Bags").child("user_a")
 ```
