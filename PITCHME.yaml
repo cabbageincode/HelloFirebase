@@ -1,0 +1,3 @@
+theme : black
+slide-number: true
+theme-override : PITCHME.css
